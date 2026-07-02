@@ -1,3 +1,5 @@
+import argparse
+
 import pygame
 import numpy as np
 
@@ -14,8 +16,7 @@ def get_speed_kmh(vehicle):
     return speed_mps * 3.6
 
 
-def draw_frame(screen, frame, speed, control, recording=True):
-    # CARLA frame is BGR. Pygame expects RGB.
+def draw_frame(screen, frame, speed, control, recording, frame_count, session_path):
     rgb = frame[:, :, ::-1]
 
     surface = pygame.surfarray.make_surface(np.transpose(rgb, (1, 0, 2)))
@@ -23,13 +24,18 @@ def draw_frame(screen, frame, speed, control, recording=True):
 
     font = pygame.font.SysFont("Arial", 22)
 
+    status = "REC" if recording else "PAUSED"
+
     lines = [
+        f"Status: {status}",
+        f"Frames saved: {frame_count}",
         f"Speed: {speed:.1f} km/h",
         f"Throttle: {control.throttle:.2f}",
         f"Brake: {control.brake:.2f}",
         f"Steer: {control.steer:.2f}",
-        "W throttle | A/D steer | S brake | Q quit",
-        "REC" if recording else "NOT RECORDING",
+        "W throttle | A/D steer | S brake",
+        "R toggle recording | Q quit",
+        f"Session: {session_path}",
     ]
 
     y = 10
@@ -41,17 +47,39 @@ def draw_frame(screen, frame, speed, control, recording=True):
     pygame.display.flip()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--session-name",
+        type=str,
+        default=None,
+        help="Optional exact session folder name."
+    )
+    parser.add_argument(
+        "--spawn-index",
+        type=int,
+        default=20,
+        help="CARLA spawn point index."
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
     env = CarlaEnvironment()
 
-    vehicle_manager = VehicleManager(env, spawn_index=20)
+    vehicle_manager = VehicleManager(env, spawn_index=args.spawn_index)
     vehicle = vehicle_manager.spawn()
 
     camera_manager = CameraManager(env, vehicle)
     camera_manager.attach_rgb_camera()
 
     controller = KeyboardController()
-    recorder = DataRecorder(session_name="manual_session_001")
+    recorder = DataRecorder(
+        session_name=args.session_name,
+        session_prefix="manual"
+    )
 
     pygame.init()
     screen = pygame.display.set_mode((960, 540))
@@ -59,10 +87,13 @@ def main():
     clock = pygame.time.Clock()
 
     running = True
+    recording = True
 
     print("Keyboard data collection running.")
     print("Click the pygame window first.")
-    print("W throttle | A/D steer | S brake | Q quit")
+    print("W throttle | A/D steer | S brake")
+    print("R toggle recording | Q quit")
+    print(f"Saving to: {recorder.base_dir}")
 
     try:
         while running:
@@ -74,6 +105,10 @@ def main():
                     if event.key == pygame.K_q:
                         running = False
 
+                    if event.key == pygame.K_r:
+                        recording = not recording
+                        print("Recording:", recording)
+
             frame = camera_manager.get_frame()
             control = controller.get_control()
 
@@ -81,15 +116,24 @@ def main():
 
             speed = get_speed_kmh(vehicle)
 
-            recorder.record(
-                image=frame,
-                steering=control.steer,
-                throttle=control.throttle,
-                brake=control.brake,
-                speed=speed,
-            )
+            if recording:
+                recorder.record(
+                    image=frame,
+                    steering=control.steer,
+                    throttle=control.throttle,
+                    brake=control.brake,
+                    speed=speed,
+                )
 
-            draw_frame(screen, frame, speed, control)
+            draw_frame(
+                screen=screen,
+                frame=frame,
+                speed=speed,
+                control=control,
+                recording=recording,
+                frame_count=recorder.frame_id,
+                session_path=recorder.base_dir,
+            )
 
             clock.tick(20)
 
@@ -99,6 +143,8 @@ def main():
         vehicle_manager.destroy()
         pygame.quit()
         print("Keyboard data collection finished.")
+        print(f"Saved frames: {recorder.frame_id}")
+        print(f"Session folder: {recorder.base_dir}")
 
 
 if __name__ == "__main__":
