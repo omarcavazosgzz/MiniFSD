@@ -38,3 +38,21 @@ Thumbs.db
 
 # Misc
 *.swp
+
+# Python package metadata
+*.egg-info/
+
+# Generated demo videos
+assets/videos/
+*.mp4
+*.avi
+*.mov
+
+# Python package metadata
+*.egg-info/
+
+# Generated demo videos
+assets/videos/
+*.mp4
+*.avi
+*.mov
