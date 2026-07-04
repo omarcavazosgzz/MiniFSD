@@ -130,3 +130,15 @@ Implemented:
 - Dataset summary and analysis script
 - Offscreen CARLA launcher
 - First usable driving dataset with 4190 frames
+
+## Base Model Demo
+
+This demo shows the first steering-only imitation learning model running in CARLA.
+
+The model is able to follow the outside loop for a while using only the front RGB camera, but it is still an early baseline. It slightly clips/hits another vehicle during the run and is not yet reliable for dense inner-city navigation, intersections, or full recovery from drift.
+
+This version is kept as the **Base Model — Outside Loop Demo** to document the first working end-to-end driving checkpoint.
+
+### Demo
+
+![Base Model Outside Loop](assets/gifs/base_model_outside_loop_small.gif)
