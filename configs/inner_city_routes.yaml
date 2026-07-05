@@ -1,0 +1,82 @@
+inner_city_v1:
+  description: "First inner-city dataset plan for Town10HD_Opt"
+
+  approach_spawns:
+    top_right_entry:
+      - 20
+      - 23
+      - 22
+
+    left_center_entry:
+      - 25
+      - 68
+      - 26
+      - 27
+      - 79
+
+    right_side_entry:
+      - 32
+      - 41
+      - 76
+
+  inner_city_spawns:
+    central_inner_road:
+      - 30
+      - 31
+      - 33
+      - 34
+      - 35
+      - 36
+      - 37
+      - 38
+      - 39
+
+    lower_inner_road:
+      - 51
+      - 52
+      - 49
+      - 50
+      - 48
+      - 47
+      - 46
+      - 45
+      - 59
+      - 58
+
+    middle_connectors:
+      - 43
+      - 55
+      - 53
+      - 57
+      - 56
+
+  recovery_spawns:
+    - 25
+    - 68
+    - 26
+    - 27
+    - 79
+    - 30
+    - 31
+    - 36
+    - 39
+    - 43
+    - 58
+    - 59
+    - 32
+    - 41
+    - 76
+    - 1
+    - 0
+    - 3
+    - 77
+
+  collection_notes:
+    target_speed: "5-8 km/h"
+    throttle: "0.08-0.12"
+    strategy:
+      - "Bias the model toward entering the inner city."
+      - "Avoid mixing outside-loop continuation and inner-city entry at the same visual location."
+      - "Collect recovery from small lane drift."
+      - "Brake before tight turns."
+      - "Use route segments instead of random spawn jumps."
