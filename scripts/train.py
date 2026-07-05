@@ -1,6 +1,9 @@
 import argparse
 from pathlib import Path
 
+from datetime import datetime
+from torch.utils.tensorboard import SummaryWriter
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split, ConcatDataset
@@ -33,6 +36,20 @@ def parse_args():
         "--latest",
         action="store_true",
         help="Use latest session in data/raw.",
+    )
+    
+    parser.add_argument(
+        "--log-dir",
+        type=str,
+        default="runs",
+        help="TensorBoard log directory.",
+    )
+
+    parser.add_argument(
+        "--run-name",
+        type=str,
+        default=None,
+        help="Optional TensorBoard run name.",
     )
 
     parser.add_argument("--epochs", type=int, default=15)
@@ -162,6 +179,10 @@ def main():
     checkpoint_dir = Path("models/checkpoints")
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / args.checkpoint_name
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_name = args.run_name or f"{checkpoint_path.stem}_{timestamp}"
+    writer = SummaryWriter(log_dir=Path(args.log_dir) / run_name)
 
     best_val_loss = float("inf")
 
@@ -177,6 +198,9 @@ def main():
     print(f"Checkpoint: {checkpoint_path}")
     print()
 
+    print(f"TensorBoard run: {Path(args.log_dir) / run_name}")
+    print()
+    
     for epoch in range(1, args.epochs + 1):
         train_loss, train_mae = train_one_epoch(
             model,
@@ -201,6 +225,11 @@ def main():
             f"val_mae={val_mae:.6f}"
         )
 
+        writer.add_scalar("Loss/Train", train_loss, epoch)
+        writer.add_scalar("Loss/Val", val_loss, epoch)
+        writer.add_scalar("MAE/Train", train_mae, epoch)
+        writer.add_scalar("MAE/Val", val_mae, epoch)
+
         if val_loss < best_val_loss:
             best_val_loss = val_loss
 
@@ -221,6 +250,7 @@ def main():
     print("Training finished.")
     print(f"Best val loss: {best_val_loss:.6f}")
 
+    writer.close()
 
 if __name__ == "__main__":
     main()
