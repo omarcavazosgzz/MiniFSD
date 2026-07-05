@@ -52,8 +52,8 @@ class CameraManager:
         image = self.image_queue.get(timeout=timeout)
         array = np.frombuffer(image.raw_data, dtype=np.uint8)
         array = array.reshape((image.height, image.width, 4))
-        return array[:, :, :3]
-
+        return array[:, :, :3].copy()
+    
     def destroy(self):
         if self.camera is not None:
             self.camera.stop()
